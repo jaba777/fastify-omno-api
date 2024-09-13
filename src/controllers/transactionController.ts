@@ -1,7 +1,9 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyRequest, FastifyReply, FastifyInstance } from "fastify";
 import axios from "axios";
 import dotenv from "dotenv";
 import { CreateTransactionDto } from "../dtos/transaction-dto";
+import { Authorization } from "../helpers/transactionHelper";
+import { io } from "..";
 
 dotenv.config();
 
@@ -11,14 +13,8 @@ export const createTransaction = async (
 ) => {
   try {
     // Replace with actual Omno API endpoint and authentication
-    const authorization = request.headers.authorization;
-    if (!authorization) {
-      reply.status(401).send({
-        success: false,
-        message: "autorisation not found",
-      });
-      return;
-    }
+
+    const authorization = await Authorization();
 
     const response = await axios.post(
       "https://api.omno.com/transaction/h2h/create",
@@ -26,18 +22,18 @@ export const createTransaction = async (
         ...request.body,
         hookUrl: `${process.env.APP_URL}/api/webhook`,
         callback: `${process.env.APP_URL}/api/callback`,
-        callbackFail: `${process.env.APP_URL}/api/callback-failed`,
+        callbackFail: `${process.env.APP_URL}/api/callbackFail`,
       },
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authorization}`,
+          Authorization: `Bearer ${authorization["access_token"]}`,
         },
       }
     );
 
-    reply.status(200).send({ success: true, data: response.data }); // it must return paymentId:
-    return;
+    reply.status(200).send({ success: true, data: response.data });
+    // it must return paymentId:
   } catch (error: any) {
     reply.status(500).send({
       success: false,
@@ -52,12 +48,11 @@ export const processWebhook = async (
 ) => {
   const webhookData: any = request.body;
   const redirectUrl = webhookData["3dsRedirectUrl"];
-
   try {
     console.log("Received webhook: ", webhookData);
 
     if (redirectUrl) {
-      reply.redirect(redirectUrl);
+      io.emit("3dsRedirectUrl", { redirectUrl });
     }
   } catch (error) {
     request.log.error("Error handling webhook", error);

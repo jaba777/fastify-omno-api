@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import transactionRoutes from "./routes/transaction";
 import FastifySwagger from "@fastify/swagger";
 import FastifySwaggerUI from "@fastify/swagger-ui";
+import { Server } from "socket.io";
 
 const app = fastify();
 
@@ -53,6 +54,21 @@ app.register(
   })
 );
 
+const io = new Server(app.server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+app.decorate("io", io);
+
+io.on("connection", (socket) => {
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
+});
+
 app.listen(
   { port: Number(process.env.PORT), host: "localhost" },
   (err, address) => {
@@ -63,3 +79,5 @@ app.listen(
     console.log(`Server listening at ${address}`);
   }
 );
+
+export { io };
