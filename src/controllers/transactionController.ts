@@ -83,8 +83,6 @@ export const processCallBack = async (
   request: FastifyRequest,
   reply: FastifyReply
 ) => {
-  const callback = request.body;
-  //3dsRedirectUrl
   try {
     return reply.send({
       success: true,

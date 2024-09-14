@@ -32,5 +32,4 @@ PORT=4000
    Build and Run the Docker Container "docker-compose up --build"
 
 6. **Swagger**
-
-address of swagger is APP_URL/documentation
+   address of swagger is APP_URL/documentation
