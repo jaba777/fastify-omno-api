@@ -70,7 +70,7 @@ io.on("connection", (socket) => {
 });
 
 app.listen(
-  { port: Number(process.env.PORT), host: "localhost" },
+  { port: Number(process.env.PORT), host: "0.0.0.0" },
   (err, address) => {
     if (err) {
       console.error(err);
